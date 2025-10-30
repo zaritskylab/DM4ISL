@@ -10,7 +10,7 @@ Fluorescence microscopy is a useful tool for cell and subcellular quantitative a
 
 
 ### Overview
-DM4ISL is a framework designed to predict organelle fluorescence in label-free microscopy images based on diffusion models and a inference optimized mechanism for improved results. This repository includes the source code for training, inference, and results analysis.
+DM4ISL is a framework designed to predict organelle fluorescence in label-free microscopy images based on diffusion models and at inference optimized mechanism for improved results. This repository includes the source code for training, inference, and results analysis.
 
 
 ### Example Notebooks
