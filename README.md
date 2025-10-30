@@ -58,8 +58,11 @@ We provide several patches of Nuclear Envelope under data/NucEnv, allowing you t
 2. Use python==3.9 and install the required dependencies:
     ```bash
     %cd DM4ISL
-    pip install -r requirements.
-    pip install notebook 
+    conda create -n DM4ISL_env python=3.9
+    conda activate DM4ISL_env
+    pip install -r requirements.txt
+    pip install notebook
+    
 3. Download two models from hugging face https://huggingface.co/OdedRot/DM4ISL/tree/main
    
    Add CLS.pth to saved_models/CLS
