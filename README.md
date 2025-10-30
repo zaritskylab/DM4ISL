@@ -13,20 +13,6 @@ Fluorescence microscopy is a useful tool for cell and subcellular quantitative a
 ### Overview
 DM4ISL is a framework designed to predict organelle fluorescence in label-free microscopy images based on diffusion models and at inference optimized mechanism for improved results. This repository includes the source code for training, inference, and results analysis.
 
-
-### Example Notebooks
-- **TRAINING notebook**: 
-
-    This notebook demonstrates how to train the DM4ISL model using paired brightfield and organelle fluoresence images. 
-    
-- **INFERENCE notebook**:
-
-    This notebook demonstrates how to predict a flouresence image using a trained DM4ISL model and brightfield input images. 
-
-- **RESULTS_ANALYSIS**:
-
-    This notebook demonstrates how to analyze prediction results using all evaluation metrics described in the paper.
-
 ### Data
 
 The full data of paired brightfield and fluorescence images can be downloaded from the allen intitute of cell science
@@ -49,6 +35,20 @@ We provide several patches of Nuclear Envelope under data/NucEnv, allowing you t
 **To run the RESULTS_ANALYSIS notebook we also provide samples from Unet and GAN predictions:**
 - Unet
 - GAN
+
+
+### Example Notebooks
+- **TRAINING notebook**: 
+
+    This notebook demonstrates how to train the DM4ISL model using paired brightfield and organelle fluoresence images. 
+    
+- **INFERENCE notebook**:
+
+    This notebook demonstrates how to predict a flouresence image using a trained DM4ISL model and brightfield input images. 
+
+- **RESULTS_ANALYSIS**:
+
+    This notebook demonstrates how to analyze prediction results using all evaluation metrics described in the paper.
 
 ## Installation and Setup
 
