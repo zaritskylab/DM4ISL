@@ -75,6 +75,6 @@ We provide several patches of Nuclear Envelope under data/NucEnv, allowing you t
 8. To evaluate predictions on a trained model use the RESULTS_ANALYSIS notebook.
 
 ## Acknowledgement
-Based on the MONAI framework found here:
+We used MONAI framework found here:
 https://github.com/Project-MONAI/MONAI
 
