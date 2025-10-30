@@ -46,7 +46,7 @@ We provide several patches of Nuclear Envelope under data/NucEnv, allowing you t
 
     This notebook demonstrates how to predict a flouresence image using a trained DM4ISL model and brightfield input images. 
 
-- **RESULTS_ANALYSIS**:
+- **RESULTS_ANALYSIS notebook**:
 
     This notebook demonstrates how to analyze prediction results using all evaluation metrics described in the paper.
 
