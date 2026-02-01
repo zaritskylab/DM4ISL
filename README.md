@@ -59,7 +59,7 @@ We provide several patches of Nuclear Envelope under data/NucEnv, allowing you t
 2. Use python==3.9 and install the required dependencies:
     ```bash
     %cd DM4ISL
-    conda create -n DM4ISL_env python=3.9
+    conda create -n DM4ISL_env python=3.9.23
     conda activate DM4ISL_env
     pip install -r requirements.txt
     pip install notebook
