@@ -71,6 +71,7 @@ We provide several patches of Nuclear Envelope under data/NucEnv, allowing you t
 6. To train a new model use the TRAIN notebook.
 7. To run inference on a trained model use the INFERENCE notebook.
 8. To evaluate predictions on a trained model use the RESULTS_ANALYSIS notebook.
+9. Our work was done on RTX6000. Use with similar GPU capabilities.
 
 ## Acknowledgement
 Our work builds upon the diffusion model MONAI framework. We adapted the "image_to_image_translation" for 3D images and for our DM4ISL inference process.
