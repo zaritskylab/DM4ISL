@@ -65,7 +65,6 @@ We provide several patches of Nuclear Envelope under data/NucEnv, allowing you t
     pip install notebook
     
 3. Download from hugging face [https://huggingface.co/OdedRot/DM4ISL/tree/main](https://huggingface.co/OdedRot/DDPM4ISL/tree/main)
-wget https://huggingface.co/OdedRot/DDPM4ISL/resolve/main/NucEnv.pth
    
    Add NucEnv.pth to saved_models/NucEnv   -   This is a trained DM4ISL model for Nuclear envelope organelle.
 5. For every notebook you use, update the "main_path" directory path.
@@ -74,6 +73,7 @@ wget https://huggingface.co/OdedRot/DDPM4ISL/resolve/main/NucEnv.pth
 8. To evaluate predictions on a trained model use the RESULTS_ANALYSIS notebook.
 
 ## Acknowledgement
-We used MONAI framework found here:
-https://github.com/Project-MONAI/MONAI
+Our work builds upon the diffusion model MONAI framework. We adapted the "image_to_image_translation" for 3D images and for our DM4ISL inference process.
+[https://github.com/Project-MONAI/MONAI](https://github.com/Project-MONAI/GenerativeModels/tree/main/tutorials/generative)
+
 
