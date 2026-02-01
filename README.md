@@ -64,11 +64,10 @@ We provide several patches of Nuclear Envelope under data/NucEnv, allowing you t
     pip install -r requirements.txt
     pip install notebook
     
-3. Download two models from hugging face https://huggingface.co/OdedRot/DM4ISL/tree/main
+3. Download from hugging face [https://huggingface.co/OdedRot/DM4ISL/tree/main](https://huggingface.co/OdedRot/DDPM4ISL/tree/main)
+wget https://huggingface.co/OdedRot/DDPM4ISL/resolve/main/NucEnv.pth
    
-   Add CLS.pth to saved_models/CLS
-   
-   Add NucEnv.pth to saved_models/NucEnv
+   Add NucEnv.pth to saved_models/NucEnv   -   This is a trained DM4ISL model for Nuclear envelope organelle.
 5. For every notebook you use, update the "main_path" directory path.
 6. To train a new model use the TRAIN notebook.
 7. To run inference on a trained model use the INFERENCE notebook.
