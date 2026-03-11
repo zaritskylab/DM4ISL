@@ -68,7 +68,7 @@ We provide several patches of Nuclear Envelope under data/NucEnv, allowing you t
    
    Add NucEnv.pth to saved_models/NucEnv   -   This is a trained DM4ISL model for Nuclear envelope organelle.
 5. For every notebook you use, update the "main_path" directory path.
-6. To train a new model use the TRAIN notebook.
+6. To train a new model use the TRAIN notebook. Train for ~40 epochs and 100 steps per epoch.
 7. To run inference on a trained model use the INFERENCE notebook.
 8. To evaluate predictions on a trained model use the RESULTS_ANALYSIS notebook.
 9. Our work was done on RTX6000. Use with similar GPU capabilities.
