@@ -21,8 +21,8 @@ def load_organelle_fovs(fov_imgs_path, organelle, Nfovs=-1):
         fov_imgs_path = fov_imgs_path + 'Nucleolus-(Dense-Fibrillar-Component)/'
     if organelle == 'DNA':
         fov_imgs_path = fov_imgs_path + 'Mitochondria/'
-        
-    imagePaths = list(paths.list_images(fov_imgs_path))
+    
+    imagePaths = sorted(list(paths.list_images(fov_imgs_path)))
     BFfovs = []
     FLfovs = []
     i = 0  
@@ -40,7 +40,7 @@ def load_organelle_fovs(fov_imgs_path, organelle, Nfovs=-1):
         FLfov = cv2.resize(FLfov.astype('uint16'), (366, 244) , interpolation = cv2.INTER_NEAREST)
         BFfovs.append(BFfov)  
         FLfovs.append(FLfov)  
-        print(imagePaths[i].split('/')[-1], BFfov.shape, '  minBF', BFfov.min() , ' minBF', BFfov.max(), '    minFL', FLfov.min() , ' minFL', FLfov.max() ) 
+        print(imagePaths[i].split('/')[-1], BFfov.shape, '  minBF', BFfov.min() , ' maxBF', BFfov.max(), '    minFL', FLfov.min() , ' maxFL', FLfov.max() ) 
     return imagePaths, BFfovs, FLfovs
 
 
@@ -67,21 +67,30 @@ class LoadModel:
     def __init__(self, main_path, organelle, load_model=1, timesteps=1000):
         # Default parameters
         self.device = torch.device("cuda") 
-        self.model = DiffusionModelUNet(spatial_dims=3, in_channels=2, out_channels=1, num_channels=[128, 256, 256, 512], attention_levels=[False, False, False, True],                          num_res_blocks=2, num_head_channels=64,).to(self.device)
+        self.model = DiffusionModelUNet(
+            spatial_dims=3, 
+            in_channels=2, 
+            out_channels=1, 
+            num_channels=[128, 256, 256, 512], 
+            attention_levels=[False, False, False, True], 
+            num_res_blocks=2, 
+            num_head_channels=64
+        ).to(self.device)
         self.tsteps = timesteps
         self.scheduler = DDPMScheduler(num_train_timesteps=self.tsteps, schedule="scaled_linear_beta", beta_start=0.0005, beta_end=0.0195)
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=2.5e-5)
         
         if load_model == 1:
-            self.model.load_state_dict(torch.load(main_path + "saved_models/" + organelle + "/"  + organelle + " model.pth"  ))
+            self.model.load_state_dict(torch.load(main_path + "saved_models/" + organelle + ".pth"))
             self.model = self.model.to(self.device)
+            print('Loaded model from: ' + main_path + "saved_models/" + organelle + ".pth")
             
-
-        def __repr__(self):
-            return (
-                f"LoadModel(device={self.device}, "
-                f"model={self.model}, "
-                f"tsteps={self.tsteps}, "
-                f"scheduler={self.scheduler}, "
-                f"optimizer={self.optimizer}, ) "
-               )
+    # FIXED: Moved this back out so it is a proper class method
+    def __repr__(self):
+        return (
+            f"LoadModel(device={self.device}, "
+            f"model={self.model.__class__.__name__}, "
+            f"tsteps={self.tsteps}, "
+            f"scheduler={self.scheduler.__class__.__name__}, "
+            f"optimizer={self.optimizer.__class__.__name__})"
+        )

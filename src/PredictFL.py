@@ -20,103 +20,45 @@ from src.DisplayFunctions import display_images, volumetric2sequence
 from src.LoadSaveFunctions import load_patches, LoadModel, save_patches
 
 
-def predict_FL(DiffModel, BFbatch_val,t_low, t_high, seed=10):
+def predict_FL(DiffModel, BFbatch, t_low, t_high, seed=10):
     device = torch.device("cuda") 
     DiffModel.model.eval()
-    xTs = torch.randn_like(BFbatch_val)[0:1].cpu().detach()
-    FL_preds_val      = torch.randn_like(BFbatch_val)[0:1].cpu().detach() # torch.Size([1, 1, 64, 64, 16])
-    all_pred_orig_val = torch.randn_like(BFbatch_val)[0:1].cpu().detach()
-    all_pred_std_val  = torch.randn_like(BFbatch_val)[0:1] .cpu().detach()
-    all_ids_pred_orig = torch.zeros(1,t_high-t_low,1,64,64,16) # torch.Size([1, 1, 1, 64, 64, 16])
-    all_ids_pred_noise = torch.zeros(1,t_high-t_low,1,64,64,16) # torch.Size([1, 1, 1, 64, 64, 16])
+    xTs            = torch.randn_like(BFbatch)[0:1].cpu().detach() # original noises
+    batch_x0_preds = torch.randn_like(BFbatch)[0:1].cpu().detach() # torch.Size([1, 1, 64, 64, 16])
+    batch_avg_x0t  = torch.randn_like(BFbatch)[0:1].cpu().detach()
+    batch_std_x0t  = torch.randn_like(BFbatch)[0:1] .cpu().detach()
     
-    for id in range(BFbatch_val.shape[0]):
-        BF_id = BFbatch_val[id:id+1]
+    for id in range(BFbatch.shape[0]):
+        BF_id = BFbatch[id:id+1]
         torch.manual_seed(seed)
-        current_id_noisy = torch.randn_like(BF_id).to(device) ### XT  
-        avg_pred_orig_id = torch.zeros_like(BF_id).cpu().detach() # [1, 1, 64, 64, 16]
-        all_id_pred_orig = torch.zeros_like(BF_id).cpu().detach()
-        all_id_pred_noise = torch.zeros_like(BF_id).cpu().detach()
-        xTs = torch.cat((xTs, current_id_noisy.cpu().detach()), dim=0) 
+        xt = torch.randn_like(BF_id).to(device) ### XT  
+        avg_x0t = torch.zeros_like(BF_id).cpu().detach() # [1, 1, 64, 64, 16] 
+        x0ts = torch.zeros_like(BF_id).cpu().detach()
+        xTs = torch.cat((xTs, xt.cpu().detach()), dim=0) 
         l=0
         for ti in range(DiffModel.tsteps-1,-1,-1): # progress_bar:  # go through the noising process 999->0
-            # if ti < t_low:
-            #     break
             with autocast(enabled=True):
                 with torch.no_grad():
-                    combined_id = torch.cat((BF_id.to(device), current_id_noisy), dim=1)
-                    predicted_noise_std1 = DiffModel.model(combined_id, timesteps=torch.Tensor((ti,)).to(device)) # predicts noise N(0,1)
-                    current_id_noisy, pred_orig_id = DiffModel.scheduler.step(predicted_noise_std1, ti, current_id_noisy) # Predict the sample at the previous timestep ti-1 given current noisy_img at ti
-                    pred_orig_id = pred_orig_id.cpu().detach()
-                    ### average pred original 
+                    combined_id = torch.cat((BF_id.to(device), xt), dim=1)
+                    eps_pred = DiffModel.model(combined_id, timesteps=torch.Tensor((ti,)).to(device)) # predicts noise N(0,1)
+                    xt, x0t = DiffModel.scheduler.step(eps_pred, ti, xt) # pred eps and x0(t)
+                    ### store intermidiate x0(t) images for avg and std
                     if ti < t_high and  ti>= t_low :  # and ti%100==0
-                        l=l+1
-                        avg_pred_orig_id = ( (l-1)*avg_pred_orig_id + pred_orig_id ) / l  ### averaging
-                        all_id_pred_orig = torch.cat(( all_id_pred_orig , pred_orig_id ) , dim=0 ) ## 201,1,64,64,16 per ID for calc variance
-                        all_id_pred_noise = torch.cat(( all_id_pred_noise , predicted_noise_std1.cpu().detach() ) , dim=0 )
+                        # l=l+1
+                        # avg_x0t = ( (l-1)*avg_x0t + x0t ) / l  ### averaging
+                        x0ts = torch.cat(( x0ts , x0t.cpu().detach() ) , dim=0 ) ## [N,1,64,64,16] per ID 
         
-        FL_preds_val = torch.cat((FL_preds_val, current_id_noisy.cpu().detach()), dim=0) ## last X0's
-        all_pred_orig_val = torch.cat((all_pred_orig_val, avg_pred_orig_id), dim=0) ## averaged X0's per id
-        std_pred_orig_id = all_id_pred_orig[1:].std(dim=0).unsqueeze(0) ## 1,1,64,64,16
-        all_pred_std_val = torch.cat((all_pred_std_val, std_pred_orig_id), dim=0) ## 1,1,64,64,16
-        all_ids_pred_orig = torch.cat((all_ids_pred_orig, all_id_pred_orig[1:].unsqueeze(0)), dim=0) ################## use for calculating all timestep for 0-1000
-        all_ids_pred_noise = torch.cat((all_ids_pred_noise, all_id_pred_noise[1:].unsqueeze(0)), dim=0)
+        batch_x0_preds = torch.cat((batch_x0_preds, xt.cpu().detach()), dim=0)                    ## last X0(t=0)s
+        batch_avg_x0t = torch.cat((batch_avg_x0t, x0ts[1:].mean(dim=0).unsqueeze(0)), dim=0)   ## averaged X0(t)s
+        batch_std_x0t = torch.cat((batch_std_x0t, x0ts[1:].std(dim=0).unsqueeze(0)   ), dim=0) ## std x0(t)s
+        print(id , ' done')
     
-    FL_preds_val = FL_preds_val[1:].numpy()  
-    FL_preds_val = (FL_preds_val - FL_preds_val.min()) / (FL_preds_val.max() - FL_preds_val.min())        # (8, 50, 1, 64, 64, 16)
-    all_pred_orig_val = all_pred_orig_val[1:].numpy()
-    all_pred_orig_val = (all_pred_orig_val - all_pred_orig_val.min()) / (all_pred_orig_val.max() - all_pred_orig_val.min())          # (8, 50, 1, 64, 64, 16) 
-    all_pred_std_val = all_pred_std_val[1:].numpy()
-    all_ids_pred_orig = all_ids_pred_orig[1:].numpy()
-    all_ids_pred_noise = all_ids_pred_noise[1:].numpy()
-   
-    return all_pred_orig_val, all_pred_std_val
-
-
-
-
-
+    batch_x0_preds = batch_x0_preds[1:].numpy()  
+    batch_x0_preds = (batch_x0_preds - batch_x0_preds.min()) / (batch_x0_preds.max() - batch_x0_preds.min()) # (N, 50, 1, 64, 64, 16)
     
-
-# def predict_FL(DiffModel, BFinput, t_low, t_high, seed=10): ## old
-#     device = torch.device("cuda") 
-#     DiffModel.model.eval()
-#     FL_preds_val      = torch.randn_like(BFinput)[0:1].to(device)  # torch.Size([1, 1, 64, 64, 16])
-#     all_pred_orig_val = torch.randn_like(BFinput)[0:1].to(device)
-#     all_pred_var_val  = torch.randn_like(BFinput)[0:1].to(device)  
-#     all_ids_pred_orig = torch.zeros(1,t_high-t_low,1,64,64,16).to(device) # torch.Size([1, 1, 1, 64, 64, 16])
-
-#     for id in range(BFinput.shape[0]):
-#         BF_id = BFinput[id:id+1]
-#         torch.manual_seed(seed)
-#         current_id_noisy = torch.randn_like(BF_id).to(device)   
-#         avg_pred_orig_id = torch.zeros_like(BF_id).to(device) # [1, 1, 64, 64, 16]
-#         all_id_pred_orig = torch.zeros_like(BF_id).to(device)
-#         l=0
-#         for ti in range(DiffModel.tsteps-1,-1,-1): # progress_bar:  # go through the noising process 999->0
-#             with autocast(enabled=True):
-#                 with torch.no_grad():
-#                     combined_id = torch.cat((BF_id.to(device), current_id_noisy), dim=1)
-#                     predicted_noise_std1 = DiffModel.model(combined_id, timesteps=torch.Tensor((ti,)).to(device)) # predicts noise N(0,1)
-#                     current_id_noisy, pred_orig_id = DiffModel.scheduler.step(predicted_noise_std1, ti, current_id_noisy) # Predict the sample at the previous timestep ti-1 given current noisy_img at ti
-#                     ### average pred original 
-#                     if ti < t_high and  ti>= t_low :  # and ti%100==0
-#                         l=l+1
-#                         # pred_orig_id = (pred_orig_id - FL_preds_val.min()) / (FL_preds_val.max() - FL_preds_val.min())   #### minmax
-#                         avg_pred_orig_id = ( (l-1)*avg_pred_orig_id + pred_orig_id ) / l  ### averaging
-#                         # avg_pred_orig_id = (avg_pred_orig_id - FL_preds_val.min()) / (FL_preds_val.max() - FL_preds_val.min())     #### minmax
-#                         all_id_pred_orig = torch.cat(( all_id_pred_orig , pred_orig_id ) , dim=0 ) ## 201,1,64,64,16 per ID for calc variance
-        
-#         FL_preds_val = torch.cat((FL_preds_val, current_id_noisy), dim=0) ## last X0's
-#         all_pred_orig_val = torch.cat((all_pred_orig_val, avg_pred_orig_id), dim=0) ## averaged X0's per id
-#         var_pred_orig_id = all_id_pred_orig[1:].var(dim=0).unsqueeze(0) ## 1,1,64,64,16
-#         all_pred_var_val = torch.cat((all_pred_var_val, var_pred_orig_id), dim=0) ## 1,1,64,64,16
-#         all_ids_pred_orig = torch.cat((all_ids_pred_orig, all_id_pred_orig[1:].unsqueeze(0)), dim=0) ################## use for calculating all timestep for 0-1000
+    batch_avg_x0t = batch_avg_x0t[1:].numpy()
+    batch_avg_x0t = (batch_avg_x0t - batch_avg_x0t.min()) / (batch_avg_x0t.max() - batch_avg_x0t.min())      # (N, 50, 1, 64, 64, 16) 
     
-#     FL_preds_val = FL_preds_val[1:].cpu().detach().numpy()  
-#     FL_preds_val = (FL_preds_val - FL_preds_val.min()) / (FL_preds_val.max() - FL_preds_val.min())        # (8, 50, 1, 64, 64, 16)
-#     all_pred_orig_val = all_pred_orig_val[1:].cpu().detach().numpy()
-#     all_pred_orig_val = (all_pred_orig_val - all_pred_orig_val.min()) / (all_pred_orig_val.max() - all_pred_orig_val.min())          # (8, 50, 1, 64, 64, 16) 
-#     all_pred_var_val = all_pred_var_val[1:].cpu().detach().numpy()
-#     all_ids_pred_orig = all_ids_pred_orig[1:].cpu().detach().numpy()
-#     return FL_preds_val , all_pred_orig_val, all_pred_var_val, all_ids_pred_orig
+    batch_std_x0t = batch_std_x0t[1:].numpy()
+    
+    return batch_x0_preds, batch_avg_x0t, batch_std_x0t
