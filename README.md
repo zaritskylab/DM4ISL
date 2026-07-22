@@ -1,5 +1,5 @@
 # DM4ISL (Diffusion model for in silico labeling)
-Oded Rotem, Assaf Zaritsky
+Oded Rotem, Orit Kliper-Gross, Assaf Zaritsky
 
 
 ## Paper Abstract
