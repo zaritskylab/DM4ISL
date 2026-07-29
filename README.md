@@ -8,12 +8,12 @@ In silico labeling predicts organelle-specific localizations from label-free ima
 
 ## Framework
 <p align="center">
-  <img src="figures/DM4ISL_workflow.png" alt="DM4ISL workflow" width="600">
+  <img src="figures/DM4ISL_workflow.png" alt="DM4ISL workflow" width="700">
 </p>
 <p>
-  <strong>The DM4ISL architecture and its averaging-based inference routine.</strong><br><br>
-  <strong>DM training:</strong> The denoiser learns to predict synthetically added Gaussian noise from noisy fluorescence images conditioned on the corresponding brightfield image.<br><br>
-  <strong>DM inference:</strong> A random noise image is iteratively refined into a fluorescence prediction while being conditioned on the corresponding brightfield image.<br><br>
+  <strong>The DM4ISL architecture and its averaging-based inference routine.</strong><br>
+  <strong>DM training:</strong> The denoiser learns to predict synthetically added Gaussian noise from noisy fluorescence images conditioned on the corresponding brightfield image.<br>
+  <strong>DM inference:</strong> A random noise image is iteratively refined into a fluorescence prediction while being conditioned on the corresponding brightfield image.<br>
   <strong>DM4ISL inference:</strong> DM4ISL computes the mean and standard deviation of fluorescence predictions across a range of intermediate denoising steps. The averaged prediction is used as the final fluorescence prediction, while the standard deviation is used to generate a localized uncertainty map.
 </p>
 
