@@ -85,3 +85,32 @@ For demonstration purposes, the notebook can also be run using the smaller examp
 ## Acknowledgement
 Our work builds upon MONAI's diffusion models framework. We adapted the image-to-image translation for 3D microscopy images and extended it to support the DM4ISL inference procedure.
 [https://github.com/Project-MONAI/MONAI](https://github.com/Project-MONAI/GenerativeModels/tree/main/tutorials/generative)
+
+## Contacts
+
+**Author**: [Oded Rotem](mailto:roded314@gmail.com)
+
+**Corresponding Author**: [Assaf Zaritsky](mailto:assafzar@gmail.com)
+
+## Citation
+
+If you use this implementation in your research, please cite:
+
+<b>Rotem, O., Kliper-Gross, O., and Zaritsky, A.</b><br>
+<i>DM4ISL: a diffusion model-based high-fidelity and uncertainty-aware in silico labeling of fluorescence images</i><br>
+bioRxiv (2026). https://doi.org/
+<pre>@article {,
+	author = {Rotem Oded, Kliper-Gross Orit, and Zaritsky Assaf},
+	title = {Cell-context dependent in silico organelle localization in label-free microscopy images},
+	elocation-id = {},
+	year = {},
+	doi = {},
+	publisher = {},
+	URL = {},
+	eprint = {},
+	journal = {}
+} </pre>
+
+## License
+
+This repository is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/).
