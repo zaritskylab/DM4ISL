@@ -8,8 +8,9 @@ In silico labeling predicts organelle-specific localizations from label-free ima
 
 
 ## Framework
-![MainFigure](https://github.com/zaritskylab/DM4ISL/blob/main/figures/MainFigure.png)  
-
+<p align="center">
+  <img src="./figures/MainFigure.png" alt="DM4ISL framework" width="900">
+</p>  
 
 ### Overview
 DM4ISL is a framework designed to predict organelle fluorescence in label-free microscopy images based on diffusion models and at inference optimized mechanism for improved results. This repository includes the source code for training, inference, and results analysis.
