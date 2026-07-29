@@ -88,7 +88,7 @@ Our work builds upon MONAI's diffusion models framework. We adapted the image-to
 
 ## Contacts
 
-**Author**: [Oded Rotem](mailto:roded314@gmail.com)
+**First Author**: [Oded Rotem](mailto:roded314@gmail.com)
 
 **Corresponding Author**: [Assaf Zaritsky](mailto:assafzar@gmail.com)
 
