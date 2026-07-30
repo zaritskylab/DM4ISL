@@ -101,7 +101,7 @@ If you use this implementation in your research, please cite:
 bioRxiv (2026). https://doi.org/
 <pre>@article {,
 	author = {Rotem Oded, Kliper-Gross Orit, and Zaritsky Assaf},
-	title = {Cell-context dependent in silico organelle localization in label-free microscopy images},
+	title = {DM4ISL: a diffusion model-based high-fidelity and uncertainty-aware in silico labeling of fluorescence images},
 	elocation-id = {},
 	year = {},
 	doi = {},
