@@ -64,7 +64,7 @@ def save_patches(main_path, organelle, images_to_save, images_folder):
         
         
 class LoadModel:
-    def __init__(self, main_path, organelle, load_model=1, timesteps=1000):
+    def __init__(self, main_path, organelle, optional_model_path, load_model=1, timesteps=1000):
         # Default parameters
         self.device = torch.device("cuda") 
         self.model = DiffusionModelUNet(
@@ -84,6 +84,11 @@ class LoadModel:
             self.model.load_state_dict(torch.load(main_path + "saved_models/" + organelle + ".pth"))
             self.model = self.model.to(self.device)
             print('Loaded model from: ' + main_path + "saved_models/" + organelle + ".pth")
+        if load_model == -1:
+            self.model.load_state_dict(torch.load(optional_model_path))
+            self.model = self.model.to(self.device)
+            print('Loaded model from: ' + optional_model_path)
+            
             
     # FIXED: Moved this back out so it is a proper class method
     def __repr__(self):
