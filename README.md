@@ -55,8 +55,8 @@ Create a Python 3.9 environment and install the required dependencies:
 ```bash
 conda create -n dm4isl_env python=3.9
 conda activate dm4isl_env
-pip install -r requirements.txt
-pip install notebook
+PYTHONNOUSERSITE=1 python -m pip install -r requirements.txt
+PYTHONNOUSERSITE=1 python -m pip install notebook
 ```
 
 Training was performed on NVIDIA RTX6000 GPUs. GPUs with similar memory capacity are recommended for training.
