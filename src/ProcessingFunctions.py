@@ -16,7 +16,7 @@ from sklearn.mixture import GaussianMixture as GMM
 from sklearn.metrics import r2_score, explained_variance_score
 import scipy
 from scipy.ndimage import zoom
-from scipy.ndimage import distance_transform_edt, label
+from scipy.ndimage import label
 from scipy import ndimage
 from scipy.stats import chi2_contingency
 import scipy.stats as stats
@@ -230,7 +230,6 @@ def segmentation_pipeline_per_patch(image3D, filter_type, k1, k2, k3, filter_ker
     return seg_th, seg_stack
 
 
-
 def get_binary_masks(imgs1, imgs2, organelle_seg_params, rn=3):   ## segmentation per patch3D
     ## general segmentation metrics
     imgs1_seg_morph_slices, imgs2_seg_morph_slices = np.zeros_like(imgs1), np.zeros_like(imgs2)
@@ -250,70 +249,6 @@ def get_binary_masks(imgs1, imgs2, organelle_seg_params, rn=3):   ## segmentatio
     masks1 = (imgs1_seg_morph_slices//255).astype('uint8') # 0 or 1  (128, 16, 64, 64)
     masks2 = (imgs2_seg_morph_slices//255).astype('uint8') # 0 or 1  (128, 16, 64, 64)
     return masks1, masks2
-
-
-def get_markers_measurements(marker3D): # gets marker3D image and returns [vol1, vol2, vol3..] , [cz1, cz2, cz3...] , ....
-    ### volume - number of pixels per object in the (16,64,64)
-    all_obj3D_volumes = []
-    all_center_z = []
-    all_center_x = []
-    all_center_y = []
-    all_center_r = []
-    for i in range( 1, len(np.unique(marker3D)) ): # i over all objects
-        single_obj_in_img3D = np.where(marker3D==np.unique(marker3D)[np.unique(marker3D)[i]] , 1, 0)
-        volume = single_obj_in_img3D.sum()
-        cx, cy, cz = ndimage.center_of_mass( single_obj_in_img3D )
-        cr = np.sqrt(cx**2 + cy**2 + cz**2) 
-        all_obj3D_volumes.append( volume ) 
-        all_center_z.append(  cz )
-        all_center_x.append(  cx )
-        all_center_y.append(  cy )
-        all_center_r.append(  cr )
-    return all_obj3D_volumes, all_center_z, all_center_x, all_center_y, all_center_r
-
-
-def calculate_shortest_distance_between_objects_3d(labeled_array):
-    object_labels = np.unique(labeled_array)[1:]
-
-    if len(object_labels) < 2:
-        # print("Less than two objects found. Cannot calculate object-to-object distances.")
-        return 0
-
-    # Get a list of unique object labels, excluding the background (0)
-    object_labels = np.unique(labeled_array)[1:]
-    
-    # Dictionary to store the results: {(label1, label2): distance}
-    distances = {}
-
-    # Loop through all unique pairs of objects
-    for i in range(len(object_labels)):
-        label1 = object_labels[i]
-        mask1 = (labeled_array == label1)
-        
-        # We only need to check pairs where j > i
-        for j in range(i + 1, len(object_labels)):
-            label2 = object_labels[j]
-            mask2 = (labeled_array == label2)
-            
-            # --- Key Algorithm Step (Identical logic to 2D, but operating on 3D masks) ---
-            
-            # Calculate the Euclidean Distance Transform from the boundary of Object 1.
-            # dist1[x, y, z] stores the shortest distance from voxel (x, y, z) to the 
-            # nearest voxel belonging to Object 1.
-            dist1 = distance_transform_edt(np.logical_not(mask1))
-            
-            # The shortest distance between Object 1 and Object 2 is the minimum value 
-            # of the dist1 map *on* the voxels of Object 2.
-            # The calculation is $\min_{v \in \text{Object } 2} (\text{dist1}[v])$
-            shortest_dist = np.min(dist1[mask2])
-            
-            # Store the result
-            distances[(label1, label2)] = shortest_dist
-            
-    avg_distance = np.array(list(distances.values())).mean()
-   
-    return avg_distance # scalar of average distances
-
 
 def do_slice_markers( img3D ): # input tensor (16,64,64) 0-1 # nuclioli th 65
     slices_markers = []
@@ -371,98 +306,3 @@ def watershed_on_seg3D(seg3D): # (16, 64, 64)
     return seg3D_markers
 
 
-def avg_hd_per_slice(gt_mask, pred_mask):
-    """
-    Calculates the mean Hausdorff Distance across all matched instances 
-    between two binary masks. Returns a single scalar.
-    """
-    # 1. Label connected components
-    gt_labeled = label(gt_mask)
-    pred_labeled = label(pred_mask)
-
-    if isinstance(gt_labeled, tuple):
-        gt_labeled = gt_labeled[0]
-    if isinstance(pred_labeled, tuple):
-        pred_labeled = pred_labeled[0]
-        
-    gt_props = regionprops(gt_labeled)
-    pred_props = regionprops(pred_labeled)
-    
-    if len(gt_props) == 0 or len(pred_props) == 0:
-        return 0.0
-
-    # 2. Compute IoU matrix for optimal 1-to-1 matching
-    iou_matrix = np.zeros((len(gt_props), len(pred_props)))
-    for i, gt_reg in enumerate(gt_props):
-        for j, pred_reg in enumerate(pred_props):
-            # Optimization: Only compute IoU if bounding boxes overlap
-            bi, bj = gt_reg.bbox, pred_reg.bbox
-            if not (bi[2] < bj[0] or bi[0] > bj[2] or bi[3] < bj[1] or bi[1] > bj[3]):
-                intersection = np.logical_and(gt_labeled == gt_reg.label, 
-                                              pred_labeled == pred_reg.label).sum()
-                union = gt_reg.area + pred_reg.area - intersection
-                iou_matrix[i, j] = intersection / union if union > 0 else 0
-
-    # 3. Hungarian Matching (Optimal Assignment)
-    gt_indices, pred_indices = linear_sum_assignment(-iou_matrix)
-
-    hd_values = []
-    
-    for gt_idx, pred_idx in zip(gt_indices, pred_indices):
-        # Only calculate HD if there is a valid spatial match (IoU > 0)
-        if iou_matrix[gt_idx, pred_idx] > 0.5:
-            obj_gt = (gt_labeled == gt_props[gt_idx].label)
-            obj_pred = (pred_labeled == pred_props[pred_idx].label)
-            
-            # skimage.metrics.hausdorff_distance is symmetric by default
-            dist = hausdorff_distance(obj_gt, obj_pred)
-            
-            if not np.isinf(dist):
-                hd_values.append(dist)
-
-    # 5. Return scalar mean
-    return np.mean(hd_values) if hd_values else 0.0
-
-def segmentation_downstream_measurements(mask3D1, mask3D2, rn=4): # (16, 64, 64)
-
-    ### watershed 
-    mask3D1_markers = watershed_on_seg3D(mask3D1)
-    mask3D2_markers = watershed_on_seg3D(mask3D2)
-
-    imgs1_binary3D_volume, imgs1_binary3D_cz, imgs1_binary3D_cx, imgs1_binary3D_cy, imgs1_binary3D_cr = get_markers_measurements( mask3D1_markers )
-    imgs2_binary3D_volume, imgs2_binary3D_cz, imgs2_binary3D_cx, imgs2_binary3D_cy, imgs2_binary3D_cr = get_markers_measurements( mask3D2_markers )
-
-    # print(imgs1_binary3D_volume, imgs1_binary3D_cr)
-    # print(imgs2_binary3D_volume, imgs2_binary3D_cr)
-    # kkk
-
-    volume_diff = np.abs( np.array(imgs1_binary3D_volume).mean() - np.array(imgs2_binary3D_volume).mean() ) 
-    cx_diff =     np.abs( np.array(imgs1_binary3D_cx).mean()     - np.array(imgs2_binary3D_cx).mean() )  
-    cy_diff =     np.abs( np.array(imgs1_binary3D_cy).mean()     - np.array(imgs2_binary3D_cy).mean() )  
-    cz_diff =     np.abs( np.array(imgs1_binary3D_cz).mean()     - np.array(imgs2_binary3D_cz).mean() )  
-    cr_diff =     np.abs( np.array(imgs1_binary3D_cr).mean()     - np.array(imgs2_binary3D_cr).mean() )  
-    
-    avg_distance_1 = calculate_shortest_distance_between_objects_3d(mask3D1_markers)
-    avg_distance_2 = calculate_shortest_distance_between_objects_3d(mask3D2_markers)
-    
-    # print(avg_distance_1, avg_distance_2)
-    
-    if np.isnan(avg_distance_1):
-        avg_distance_1 = 0
-    if np.isnan(avg_distance_2):
-        avg_distance_2 = 0
-    avg_distance = np.abs(avg_distance_1 - avg_distance_2)# np.abs(( (avg_distance_1+0.0001) / (avg_distance_2+0.0001) ) - 1)
-    
-    ##option b
-    # results = analyze_matching_features(masks1_markers, masks2_markers, iou_threshold=0.5)
-    # cr_diff =results['CoM_Distance'].values.mean()
-    # volume_diff = results['Volume_Ratio'].values.mean()
-
-    # hd = calc_avg_hd_per_id(mask3D1_markers, mask3D2_markers)
-
-    slices1_hd = []
-    for slice in range(mask3D1.shape[0]): # (16, 64, 64)
-         slices1_hd.append( avg_hd_per_slice(mask3D1[slice], mask3D2[slice]) )
-    hd = np.array(slices1_hd).mean()                
-    
-    return np.round(hd,rn), np.round(volume_diff,rn), np.round(cx_diff,rn), np.round(cy_diff,rn), np.round(cz_diff,rn), np.round(cr_diff,rn), np.round(avg_distance,rn)
