@@ -44,7 +44,7 @@ def get_markers_measurements(marker3D): # gets marker3D image and returns [vol1,
         all_center_r.append(  cr )
     return all_obj3D_volumes, all_center_z, all_center_x, all_center_y, all_center_r
 
-def calculate_shortest_distance_between_objects_3d(labeled_array):
+def calculate_shortest_distances_between_objects_3d(labeled_array):
     object_labels = np.unique(labeled_array)[1:]
 
     if len(object_labels) < 2:
@@ -82,10 +82,9 @@ def calculate_shortest_distance_between_objects_3d(labeled_array):
             # Store the result
             distances[(label1, label2)] = shortest_dist
             
-    avg_distance = np.array(list(distances.values())).mean()
-   
-    return avg_distance # scalar of average distances
+    return np.array(list(distances.values())) 
 
+    
 def avg_hd_per_slice(gt_mask, pred_mask):
     """
     Calculates the mean Hausdorff Distance across all matched instances 
@@ -113,8 +112,7 @@ def avg_hd_per_slice(gt_mask, pred_mask):
             # Optimization: Only compute IoU if bounding boxes overlap
             bi, bj = gt_reg.bbox, pred_reg.bbox
             if not (bi[2] < bj[0] or bi[0] > bj[2] or bi[3] < bj[1] or bi[1] > bj[3]):
-                intersection = np.logical_and(gt_labeled == gt_reg.label, 
-                                              pred_labeled == pred_reg.label).sum()
+                intersection = np.logical_and(gt_labeled == gt_reg.label, pred_labeled == pred_reg.label).sum()
                 union = gt_reg.area + pred_reg.area - intersection
                 iou_matrix[i, j] = intersection / union if union > 0 else 0
 
@@ -124,7 +122,7 @@ def avg_hd_per_slice(gt_mask, pred_mask):
     hd_values = []
     
     for gt_idx, pred_idx in zip(gt_indices, pred_indices):
-        # Only calculate HD if there is a valid spatial match (IoU > 0)
+        # Only calculate HD if there is a valid spatial match (IoU > th)
         if iou_matrix[gt_idx, pred_idx] > 0.5:
             obj_gt = (gt_labeled == gt_props[gt_idx].label)
             obj_pred = (pred_labeled == pred_props[pred_idx].label)
@@ -157,16 +155,18 @@ def segmentation_downstream_measurements(mask3D1, mask3D2, rn=4): # (16, 64, 64)
     cz_diff =     np.abs( np.array(imgs1_binary3D_cz).mean()     - np.array(imgs2_binary3D_cz).mean() )  
     cr_diff =     np.abs( np.array(imgs1_binary3D_cr).mean()     - np.array(imgs2_binary3D_cr).mean() )  
     
-    avg_distance_1 = calculate_shortest_distance_between_objects_3d(mask3D1_markers)
-    avg_distance_2 = calculate_shortest_distance_between_objects_3d(mask3D2_markers)
-    
-    # print(avg_distance_1, avg_distance_2)
-    
-    if np.isnan(avg_distance_1):
-        avg_distance_1 = 0
-    if np.isnan(avg_distance_2):
-        avg_distance_2 = 0
-    avg_distance = np.abs(avg_distance_1 - avg_distance_2)# np.abs(( (avg_distance_1+0.0001) / (avg_distance_2+0.0001) ) - 1)
+    distances_1 = calculate_shortest_distances_between_objects_3d(mask3D1_markers)
+    distances_2 = calculate_shortest_distances_between_objects_3d(mask3D2_markers)
+
+    # print(distances_1)
+    # print(distances_2)
+    # print('')
+        
+    # if np.isnan(distances_1):
+    #     distances_1 = 0
+    # if np.isnan(distances_2):
+    #     avg_distance_2 = 0
+    avg_distance = np.abs(distances_1).mean() - np.abs(distances_2).mean()
     
     ##option b
     # results = analyze_matching_features(masks1_markers, masks2_markers, iou_threshold=0.5)
@@ -243,11 +243,11 @@ def calc_metrics(all_GT_images__, all_Model_images__, organelle_seg_params, rn=4
         hds.append( hd ), volume_diffs.append( volume_diff ), cx_diffs.append( cx_diff ), cy_diffs.append( cy_diff ), cz_diffs.append( cz_diff ), cr_diffs.append( cr_diff ), distances.append( distance )    
     hds          = minmax_norm(z_norm(np.array(hds)))
     volume_diffs = minmax_norm(z_norm(np.array(volume_diffs)))
+    distances    = minmax_norm(z_norm(np.array(distances)))
     cx_diffs     = minmax_norm(z_norm(np.array(cx_diffs)))
     cy_diffs     = minmax_norm(z_norm(np.array(cy_diffs))) 
     cz_diffs     = minmax_norm(z_norm(np.array(cz_diffs))) 
     cr_diffs     = minmax_norm(z_norm(np.array(cr_diffs))) 
-    distances    = minmax_norm(z_norm(np.array(distances)))
     
 
     # pccs, mses, msssims, jsds, mis, ious = [], [], [], [], [], []
@@ -276,7 +276,7 @@ def calc_metrics(all_GT_images__, all_Model_images__, organelle_seg_params, rn=4
 
     
     
-    return pccs, mses, msssims, jsds, mis, ious   ,   hds, volume_diffs, cx_diffs, cy_diffs, cz_diffs, cr_diffs, distances  
+    return pccs, mses, msssims, jsds, mis, ious   ,   hds, volume_diffs, distances   # cx_diffs, cy_diffs, cz_diffs, cr_diffs
 
 
 
