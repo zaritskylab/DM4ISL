@@ -1,3 +1,6 @@
+import os
+import shutil
+
 import tifffile
 import numpy as np
 import torch
@@ -54,15 +57,20 @@ def load_patches(main_path, organelle, imgs_name, Nimgs):
         imgs.append(img)
     return np.array(imgs)
 
-def save_patches(main_path, organelle, images_to_save, images_folder):   
-    img_uint8 = np.round(minmax_norm(images_to_save)*255).astype('uint8')
+# def save_patches(main_path, organelle, images_to_save, images_folder):
+def save_patches(output_dir, organelle, images_to_save, images_folder, clear_existing=False):
+    save_dir = os.path.join(output_dir, "test_patches", organelle, images_folder)
+    if clear_existing and os.path.isdir(save_dir):
+        shutil.rmtree(save_dir)
+    os.makedirs(save_dir, exist_ok=True)
+    img_uint8 = np.round(minmax_norm(images_to_save) * 255).astype("uint8")
     for i in range(len(images_to_save)):
         image_to_save = img_uint8[i][0]
-        image_to_save = image_to_save.transpose(2,0,1)
+        image_to_save = image_to_save.transpose(2, 0, 1)
         print(image_to_save.shape, image_to_save.dtype, image_to_save.min(), image_to_save.max())
-        tifffile.imwrite(main_path + 'test_patches/' + organelle +   '/' + images_folder + '/' + str(i) + '.tiff', image_to_save)
-        
-        
+        tifffile.imwrite(os.path.join(save_dir, f"{i}.tiff"), image_to_save)
+        # tifffile.imwrite(main_path + '/' + str(i) + '.tiff', image_to_save) 
+
 class LoadModel:
     def __init__(self, main_path, organelle, optional_model_path, load_model=1, timesteps=1000):
         # Default parameters
