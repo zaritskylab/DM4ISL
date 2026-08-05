@@ -29,6 +29,7 @@ def predict_FL(DiffModel, BFbatch, t_low, t_high, seed=10):
     batch_std_x0t  = torch.randn_like(BFbatch)[0:1] .cpu().detach()
     
     for id in range(BFbatch.shape[0]):
+        print('Initializing inference patch: ' , id)
         BF_id = BFbatch[id:id+1]
         torch.manual_seed(seed)
         xt = torch.randn_like(BF_id).to(device) ### XT  
