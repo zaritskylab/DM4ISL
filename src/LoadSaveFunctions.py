@@ -9,8 +9,8 @@ from generative.networks.nets.diffusion_model_unet import DiffusionModelUNet
 from generative.networks.schedulers.ddpm import DDPMScheduler
 from src.ProcessingFunctions import minmax_norm
 
-def load_organelle_fovs(main_path, fovs_path, organelle, Nfovs=-1):
-    fov_imgs_path = main_path + '/'+ fovs_path
+def load_organelle_fovs(fov_imgs_path, organelle, Nfovs=-1):
+    # fov_imgs_path = main_path + '/'+ fovs_path
     if organelle == 'Nuclear envelope':
          fov_imgs_path = fov_imgs_path + '/'+ 'Nuclear-envelope/'
     if organelle == 'Actin filament':
@@ -46,17 +46,17 @@ def load_organelle_fovs(main_path, fovs_path, organelle, Nfovs=-1):
     return imagePaths, BFfovs, FLfovs
 
 
-def load_patches(main_path, patches_path, organelle, imgs_name, Nimgs):
+def load_patches(patches_path, organelle, imgs_name, Nimgs):
     imgs = []
     for id in range(Nimgs):
         image_ID = str(id) 
-        path = main_path + '/' + patches_path + '/'+ organelle + '/' + imgs_name + '/' + image_ID + '.tiff'
+        path = patches_path + '/'+ organelle + '/' + imgs_name + '/' + image_ID + '.tiff'
         img = tifffile.imread(path)
         img = img / 255 
         imgs.append(img)
     return np.array(imgs)
 
-def save_patches(main_path, patches_path, organelle, images_to_save, images_folder):   
+def save_patches(patches_path, organelle, images_to_save, images_folder):   
     img_uint8 = np.round(minmax_norm(images_to_save)*255).astype('uint8')
     for i in range(len(images_to_save)):
         image_to_save = img_uint8[i][0]
@@ -64,13 +64,13 @@ def save_patches(main_path, patches_path, organelle, images_to_save, images_fold
         print(image_to_save.shape, image_to_save.dtype, image_to_save.min(), image_to_save.max())
         # tifffile.imwrite(main_path + 'test_patches/' + organelle +   '/' + images_folder + '/' + str(i) + '.tiff', image_to_save)
 
-        folder_path = main_path + '/' + patches_path + '/' + organelle +   '/' + images_folder + '/'
+        folder_path = patches_path + '/' + organelle +   '/' + images_folder + '/'
         os.makedirs(folder_path, exist_ok=True)
         tifffile.imwrite(os.path.join(folder_path, str(i) + '.tiff'), image_to_save)
         
         
 class LoadModel:
-    def __init__(self, main_path, model_path, organelle, optional_model_path, load_model=1, timesteps=1000):
+    def __init__(self, model_path, organelle, load_model=1, timesteps=1000):
         # Default parameters
         self.device = torch.device("cuda") 
         self.model = DiffusionModelUNet(
@@ -87,13 +87,9 @@ class LoadModel:
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=2.5e-5)
         
         if load_model == 1:
-            self.model.load_state_dict(torch.load(main_path + '/' + model_path + '/' + organelle + ".pth"))
+            self.model.load_state_dict(torch.load(model_path))
             self.model = self.model.to(self.device)
-            print('Loaded model from: ' + main_path + '/' + model_path + '/' + organelle + ".pth")
-        if load_model == -1:
-            self.model.load_state_dict(torch.load(optional_model_path))
-            self.model = self.model.to(self.device)
-            print('Loaded model from: ' + optional_model_path)
+            print('Loaded model from: ' + model_path)
             
             
     # FIXED: Moved this back out so it is a proper class method
