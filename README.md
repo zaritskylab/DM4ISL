@@ -62,6 +62,20 @@ PYTHONNOUSERSITE=1 python -m pip install notebook
 Training was performed on NVIDIA RTX6000 GPUs. GPUs with similar memory capacity are recommended for training.
 Before running the notebooks, update the `main_path` variable to point to your local project directory.
 
+## Repository Structure
+
+```text
+DM4ISL/
+├── TRAIN.ipynb              # Train the model and generate test patches
+├── INFERENCE.ipynb          # Generate fluorescence predictions and uncertainty maps
+├── RESULTS_ANALYSIS.ipynb   # Evaluate predictions and compare methods
+├── src/                     # Utility functions used by the notebooks
+├── generative/              # MONAI-based generative models implementation
+├── figures/                 # Figures used in the README
+├── requirements.txt         # Python dependencies
+└── README.md
+```
+
 ## Example Notebooks
 
 ### TRAINING notebook
