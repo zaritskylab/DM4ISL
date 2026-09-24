@@ -2,35 +2,41 @@ def training_seeds(organelle):
     if organelle == 'DNA':
         train_test_split_seed = 35 
         test_patches_seed = 5
-    if organelle == 'Nuclear envelope':
+    elif organelle == 'Nuclear_envelope':
         train_test_split_seed = 4 
         test_patches_seed = 5
-    if organelle == 'Nucleoli':
+    elif organelle == 'Nucleoli':
         train_test_split_seed = 4 
         test_patches_seed = 5
-    if organelle == 'Actin filament':
+    elif organelle == 'Actin_filaments':
         train_test_split_seed = 20 
         test_patches_seed = 5
-    if organelle == 'Microtubules':
+    elif organelle == 'Microtubules':
         train_test_split_seed = 3 
         test_patches_seed = 16
-    if organelle == 'Mitochondria':
+    elif organelle == 'Mitochondria':
         train_test_split_seed = 3 
         test_patches_seed = 16
+    else:
+        raise ValueError(f"Unknown organelle: {organelle}")
     return train_test_split_seed, test_patches_seed
 
 
 def uncertaintymap_parameters(organelle):
     if organelle == 'DNA':
         std_th = 0.045
-    if organelle == 'Nuclear envelope':
+    elif organelle == 'Nuclear_envelope':
         std_th = 0.055
-    if organelle == 'Nucleoli':
+    elif organelle == 'Nucleoli':
         std_th = 0.065
-    if organelle == 'Actin filament':
+    elif organelle == 'Actin_filaments':
         std_th = 0.09
-    if organelle == 'Microtubules':
+    elif organelle == 'Microtubules':
         std_th = 0.04
+    elif organelle == 'Mitochondria':
+        raise ValueError("Uncertainty maps are not available for Mitochondria.")
+    else:
+        raise ValueError(f"Unknown organelle: {organelle}")
     return std_th
 
 def organelle_parameters(organelle):            
@@ -40,36 +46,38 @@ def organelle_parameters(organelle):
         BFminGL_clip = 10000
         FLmaxGL_clip = 650
         FLminGL_clip = 380
-    if organelle == 'Mitochondria':
+    elif organelle == 'Mitochondria':
         std_TH = 18 
         BFmaxGL_clip = 55000
         BFminGL_clip = 10000
         FLmaxGL_clip = 800
         FLminGL_clip = 385
-    if organelle == 'Nuclear envelope':
+    elif organelle == 'Nuclear_envelope':
         std_TH = 70 
         BFmaxGL_clip = 55000
         BFminGL_clip = 12000
         FLmaxGL_clip = 1500
         FLminGL_clip = 390
-    if organelle == 'Nucleoli':
+    elif organelle == 'Nucleoli':
         std_TH = 53
         BFmaxGL_clip = 55000
         BFminGL_clip = 10000
         FLmaxGL_clip = 2500
         FLminGL_clip = 390
-    if organelle == 'Actin filament':
+    elif organelle == 'Actin_filaments':
         std_TH = 25
         BFmaxGL_clip = 35000
         BFminGL_clip = 12000
         FLmaxGL_clip = 800
         FLminGL_clip = 390
-    if organelle == 'Microtubules':
+    elif organelle == 'Microtubules':
         std_TH = 250
         BFmaxGL_clip = 55000
         BFminGL_clip = 10000
         FLmaxGL_clip = 5000
         FLminGL_clip = 395
+    else:
+        raise ValueError(f"Unknown organelle: {organelle}")
     return std_TH, BFmaxGL_clip, BFminGL_clip, FLmaxGL_clip, FLminGL_clip
 
 
@@ -120,7 +128,7 @@ class SegmentationParams:
             self.do_fill_holes = True
             self.do_fill_holes_boarders = False
             
-        elif organelle == 'Nuclear envelope':
+        elif organelle == 'Nuclear_envelope':
             self.remove = []
             self.organelle_th = -2
             self.filter_type = 'median' # 'bilateral' 'median's
@@ -150,7 +158,7 @@ class SegmentationParams:
             self.do_fill_holes = True
             self.do_fill_holes_boarders = False
             
-        elif organelle == 'Actin filament':
+        elif organelle == 'Actin_filaments':
             self.remove = []
             self.organelle_th = -2
             self.filter_type = 'median' # 'bilateral' 'median's

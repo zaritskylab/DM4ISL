@@ -11,26 +11,20 @@ import os
 from generative.networks.nets.diffusion_model_unet import DiffusionModelUNet
 from generative.networks.schedulers.ddpm import DDPMScheduler
 from src.ProcessingFunctions import minmax_norm
+from src.Config import ORGANELLE_NAME_MAP
 
 def load_organelle_fovs(fov_imgs_path, organelle, Nfovs=-1):
-    # fov_imgs_path = main_path + '/'+ fovs_path
-    if organelle == 'Nuclear envelope':
-         fov_imgs_path = fov_imgs_path + '/'+ 'Nuclear-envelope/'
-    if organelle == 'Actin filament':
-        fov_imgs_path = fov_imgs_path + '/'+ 'Actin-filaments/'
-    if organelle == 'Microtubules':
-        fov_imgs_path = fov_imgs_path + '/'+ 'Microtubules/'
-    if organelle == 'Mitochondria':
-        fov_imgs_path = fov_imgs_path + '/'+ 'Mitochondria/'
-    if organelle == 'Nucleoli':
-        fov_imgs_path = fov_imgs_path + '/'+ 'Nucleolus-(Dense-Fibrillar-Component)/'
-    if organelle == 'DNA':
-        fov_imgs_path = fov_imgs_path + '/'+ 'Mitochondria/'
+    if organelle not in ORGANELLE_NAME_MAP:
+        raise ValueError(
+            f"Unknown organelle '{organelle}'. "
+            f"Expected one of: {list(ORGANELLE_NAME_MAP.keys())}"
+        )
+    fov_imgs_path = os.path.join(fov_imgs_path, ORGANELLE_NAME_MAP[organelle])
     
     imagePaths = sorted(list(paths.list_images(fov_imgs_path)))
     BFfovs = []
     FLfovs = []
-    i = 0  
+
     if Nfovs== -1:
         Nfovs = len(imagePaths)
     for i in range( Nfovs ): # len(imagePaths)
@@ -49,28 +43,29 @@ def load_organelle_fovs(fov_imgs_path, organelle, Nfovs=-1):
     return imagePaths, BFfovs, FLfovs
 
 
-def load_patches(patches_path, organelle, imgs_name, Nimgs):
+def load_patches(patches_path, organelle, image_type, Nimgs):
     imgs = []
     for id in range(Nimgs):
-        image_ID = str(id) 
-        path = patches_path + '/'+ organelle + '/' + imgs_name + '/' + image_ID + '.tiff'
+        image_name = f"{id:03d}_{image_type}.tiff"
+        path = os.path.join(patches_path, organelle, image_type, image_name)
         img = tifffile.imread(path)
-        img = img / 255 
+        img = img / 255
         imgs.append(img)
     return np.array(imgs)
 
-def save_patches(patches_path, organelle, images_to_save, images_folder):   
-    img_uint8 = np.round(minmax_norm(images_to_save)*255).astype('uint8')
+        
+def save_patches(patches_path, organelle, images_to_save, image_type):
+    img_uint8 = np.round(minmax_norm(images_to_save) * 255).astype('uint8') # minmax_norm not functional
+    folder_path = os.path.join(patches_path, organelle, image_type)
+    os.makedirs(folder_path, exist_ok=True)
     for i in range(len(images_to_save)):
         image_to_save = img_uint8[i][0]
         image_to_save = image_to_save.transpose(2, 0, 1)
         print(image_to_save.shape, image_to_save.dtype, image_to_save.min(), image_to_save.max())
-        
-        folder_path = patches_path + '/' + organelle +   '/' + images_folder + '/'
-        os.makedirs(folder_path, exist_ok=True)
-        tifffile.imwrite(os.path.join(folder_path, str(i) + '.tiff'), image_to_save)
-        
-        
+        image_name = f"{i:03d}_{image_type}.tiff"
+        tifffile.imwrite(os.path.join(folder_path, image_name),image_to_save)
+
+
 class LoadModel:
     def __init__(self, model_path, organelle, load_model=1, timesteps=1000):
         # Default parameters
@@ -92,9 +87,8 @@ class LoadModel:
             self.model.load_state_dict(torch.load(model_path))
             self.model = self.model.to(self.device)
             print('Loaded model from: ' + model_path)
+
             
-            
-    # FIXED: Moved this back out so it is a proper class method
     def __repr__(self):
         return (
             f"LoadModel(device={self.device}, "
